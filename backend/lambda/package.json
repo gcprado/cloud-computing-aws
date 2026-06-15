@@ -1,0 +1,8 @@
+{
+  "name": "inventory-api",
+  "version": "1.0.0",
+  "description": "Serverless Inventory API with AWS Lambda + DynamoDB",
+  "dependencies": {
+    "aws-sdk": "^2.1693.0"
+  }
+}

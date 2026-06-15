@@ -1,0 +1,114 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+Globals:
+  Function:
+    Runtime: nodejs18.x
+    Timeout: 10
+    MemorySize: 128
+    Environment:
+      Variables:
+        TABLE_NAME: InventoryItems
+
+Resources:
+
+  InventoryTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: InventoryItems
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+
+  CreateItemFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: create-item
+      Handler: src/createItem.handler
+      CodeUri: .
+      Role: arn:aws:iam::186019336293:role/LabRole
+      Events:
+        CreateItemAPI:
+          Type: Api
+          Properties:
+            Path: /items
+            Method: POST
+
+  ListItemsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: list-items
+      Handler: src/listItems.handler
+      CodeUri: .
+      Role: arn:aws:iam::186019336293:role/LabRole
+      Events:
+        ListItemsAPI:
+          Type: Api
+          Properties:
+            Path: /items
+            Method: GET
+
+  GetItemFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: get-item
+      Handler: src/getItem.handler
+      CodeUri: .
+      Role: arn:aws:iam::186019336293:role/LabRole
+      Events:
+        GetItemAPI:
+          Type: Api
+          Properties:
+            Path: /items/{id}
+            Method: GET
+
+  UpdateItemFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: update-item
+      Handler: src/updateItem.handler
+      CodeUri: .
+      Role: arn:aws:iam::186019336293:role/LabRole
+      Events:
+        UpdateItemAPI:
+          Type: Api
+          Properties:
+            Path: /items/{id}
+            Method: PUT
+
+  DeleteItemFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: delete-item
+      Handler: src/deleteItem.handler
+      CodeUri: .
+      Role: arn:aws:iam::186019336293:role/LabRole
+      Events:
+        DeleteItemAPI:
+          Type: Api
+          Properties:
+            Path: /items/{id}
+            Method: DELETE
+
+  HealthFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: health-check
+      Handler: src/health.handler
+      CodeUri: .
+      Role: arn:aws:iam::186019336293:role/LabRole
+      Events:
+        HealthAPI:
+          Type: Api
+          Properties:
+            Path: /health
+            Method: GET
+
+Outputs:
+  ApiUrl:
+    Description: API URL
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod"
