@@ -1,6 +1,8 @@
-const AWS = require("aws-sdk");
+const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
+const { DynamoDBDocumentClient, PutCommand } = require("@aws-sdk/lib-dynamodb");
 
-const dynamo = new AWS.DynamoDB.DocumentClient();
+const client = new DynamoDBClient({});
+const dynamo = DynamoDBDocumentClient.from(client);
 
 // ------------------------------------------------------------
 // 0. Helper de respuesta HTTP
@@ -42,7 +44,9 @@ exports.handler = async (event) => {
     // ------------------------------------------------------------
     if (!event.body) {
       return response(400, {
-        message: "Body requerido"
+        message: "Body requerido",
+        error: "Body requerido",
+        data: null
       });
     }
 
@@ -55,7 +59,9 @@ exports.handler = async (event) => {
       data = JSON.parse(event.body);
     } catch (err) {
       return response(400, {
-        message: "JSON inválido en el body"
+        message: "JSON inválido en el body",
+        error: "JSON inválido en el body",
+        data: null
       });
     }
 
@@ -67,7 +73,8 @@ exports.handler = async (event) => {
     if (error) {
       return response(400, {
         message: "Error de validación",
-        error
+        error,
+        data: null
       });
     }
 
@@ -94,15 +101,16 @@ exports.handler = async (event) => {
     // 6. Guardar en DynamoDB
     // ------------------------------------------------------------
     try {
-      await dynamo.put({
+      await dynamo.send(new PutCommand({
         TableName: process.env.TABLE_NAME,
         Item: item
-      }).promise();
+      }));
 
     } catch (dbError) {
       return response(500, {
         message: "Error guardando en DynamoDB",
-        error: dbError.message
+        error: dbError.message,
+        data: null
       });
     }
 
@@ -111,7 +119,7 @@ exports.handler = async (event) => {
     // ------------------------------------------------------------
     return response(201, {
       message: "Item creado correctamente",
-      item
+      data: item
     });
 
   } catch (error) {
@@ -121,7 +129,8 @@ exports.handler = async (event) => {
     // ------------------------------------------------------------
     return response(500, {
       message: "Error creando item",
-      error: error.message
+      error: error.message,
+      data: null
     });
   }
 };

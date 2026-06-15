@@ -1,6 +1,8 @@
-const AWS = require("aws-sdk");
+const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
+const { DynamoDBDocumentClient, ScanCommand } = require("@aws-sdk/lib-dynamodb");
 
-const dynamo = new AWS.DynamoDB.DocumentClient();
+const client = new DynamoDBClient({});
+const dynamo = DynamoDBDocumentClient.from(client);
 
 // ------------------------------------------------------------
 // 0. Helper de respuesta HTTP
@@ -23,14 +25,14 @@ exports.handler = async () => {
     // ------------------------------------------------------------
     // 2. Escanear DynamoDB (equivalente a SELECT *)
     // ------------------------------------------------------------
-    const result = await dynamo.scan(params).promise();
+    const result = await dynamo.send(new ScanCommand(params));
 
     // ------------------------------------------------------------
     // 3. Respuesta exitosa
     // ------------------------------------------------------------
     return response(200, {
       message: "Items obtenidos correctamente",
-      items: result.Items
+      data: result.Items
     });
 
   } catch (error) {
@@ -43,7 +45,8 @@ exports.handler = async () => {
 
     return response(500, {
       message: "Error obteniendo items",
-      error: error.message
+      error: error.message,
+      data: null
     });
   }
 };

@@ -28,8 +28,8 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: create-item
-      Handler: src/createItem.handler
-      CodeUri: .
+      Handler: index.handler
+      CodeUri: src/createItem/
       Role: arn:aws:iam::186019336293:role/LabRole
       Events:
         CreateItemAPI:
@@ -42,8 +42,8 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: list-items
-      Handler: src/listItems.handler
-      CodeUri: .
+      Handler: index.handler
+      CodeUri: src/listItems/
       Role: arn:aws:iam::186019336293:role/LabRole
       Events:
         ListItemsAPI:
@@ -56,8 +56,8 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: get-item
-      Handler: src/getItem.handler
-      CodeUri: .
+      Handler: index.handler
+      CodeUri: src/getItem/
       Role: arn:aws:iam::186019336293:role/LabRole
       Events:
         GetItemAPI:
@@ -70,8 +70,8 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: update-item
-      Handler: src/updateItem.handler
-      CodeUri: .
+      Handler: index.handler
+      CodeUri: src/updateItem/
       Role: arn:aws:iam::186019336293:role/LabRole
       Events:
         UpdateItemAPI:
@@ -84,8 +84,8 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: delete-item
-      Handler: src/deleteItem.handler
-      CodeUri: .
+      Handler: index.handler
+      CodeUri: src/deleteItem/
       Role: arn:aws:iam::186019336293:role/LabRole
       Events:
         DeleteItemAPI:
@@ -98,8 +98,8 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: health-check
-      Handler: src/health.handler
-      CodeUri: .
+      Handler: index.handler
+      CodeUri: src/health/
       Role: arn:aws:iam::186019336293:role/LabRole
       Events:
         HealthAPI:

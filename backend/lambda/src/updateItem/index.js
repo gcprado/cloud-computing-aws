@@ -1,6 +1,8 @@
-const AWS = require("aws-sdk");
+const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
+const { DynamoDBDocumentClient, UpdateCommand } = require("@aws-sdk/lib-dynamodb");
 
-const dynamo = new AWS.DynamoDB.DocumentClient();
+const client = new DynamoDBClient({});
+const dynamo = DynamoDBDocumentClient.from(client);
 
 // ------------------------------------------------------------
 // 0. Campos permitidos para update (whitelist)
@@ -38,7 +40,9 @@ exports.handler = async (event) => {
 
     if (!id) {
       return response(400, {
-        message: "El id es obligatorio"
+        message: "El id es obligatorio",
+        error: "El id es obligatorio",
+        data: null
       });
     }
 
@@ -51,7 +55,8 @@ exports.handler = async (event) => {
     } catch (parseError) {
       return response(400, {
         message: "Body inválido, debe ser JSON válido",
-        error: parseError.message
+        error: parseError.message,
+        data: null
       });
     }
 
@@ -101,7 +106,9 @@ exports.handler = async (event) => {
     // ------------------------------------------------------------
     if (!hasFields) {
       return response(400, {
-        message: "No hay campos válidos para actualizar"
+        message: "No hay campos válidos para actualizar",
+        error: "No hay campos válidos para actualizar",
+        data: null
       });
     }
 
@@ -125,14 +132,14 @@ exports.handler = async (event) => {
     // ------------------------------------------------------------
     // 7. Ejecutar update
     // ------------------------------------------------------------
-    const result = await dynamo.update(params).promise();
+    const result = await dynamo.send(new UpdateCommand(params));
 
     // ------------------------------------------------------------
     // 8. Respuesta HTTP
     // ------------------------------------------------------------
     return response(200, {
       message: "Item actualizado correctamente",
-      item: result.Attributes
+      data: result.Attributes
     });
 
   } catch (error) {
@@ -142,12 +149,10 @@ exports.handler = async (event) => {
     // ------------------------------------------------------------
     console.error("ERROR UPDATE ITEM:", error);
 
-    return {
-      statusCode: 500,
-      body: JSON.stringify({
-        message: "Error actualizando item",
-        error: error.message
-      })
-    };
+    return response(500, {
+      message: "Error actualizando item",
+      error: error.message,
+      data: null
+    });
   }
 };

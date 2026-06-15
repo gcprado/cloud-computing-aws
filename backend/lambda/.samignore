@@ -1,0 +1,9 @@
+# Ignorar archivos innecesarios durante el build de SAM
+src/
+node_modules/
+package.json
+package-lock.json
+*.md
+.git/
+.gitignore
+.aws-sam/

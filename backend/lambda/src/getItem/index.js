@@ -1,6 +1,8 @@
-const AWS = require("aws-sdk");
+const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
+const { DynamoDBDocumentClient, GetCommand } = require("@aws-sdk/lib-dynamodb");
 
-const dynamo = new AWS.DynamoDB.DocumentClient();
+const client = new DynamoDBClient({});
+const dynamo = DynamoDBDocumentClient.from(client);
 
 // ------------------------------------------------------------
 // 0. Helper de respuesta HTTP
@@ -20,7 +22,9 @@ exports.handler = async (event) => {
 
     if (!id) {
       return response(400, {
-        message: "ID es obligatorio"
+        message: "ID es obligatorio",
+        error: "ID es obligatorio",
+        data: null
       });
     }
 
@@ -35,14 +39,16 @@ exports.handler = async (event) => {
     // ------------------------------------------------------------
     // 3. Buscar item
     // ------------------------------------------------------------
-    const result = await dynamo.get(params).promise();
+    const result = await dynamo.send(new GetCommand(params));
 
     // ------------------------------------------------------------
     // 4. Si no existe
     // ------------------------------------------------------------
     if (!result.Item) {
       return response(404, {
-        message: "Item no encontrado"
+        message: "Item no encontrado",
+        error: "Item no encontrado",
+        data: null
       });
     }
 
@@ -51,7 +57,7 @@ exports.handler = async (event) => {
     // ------------------------------------------------------------
     return response(200, {
       message: "Item encontrado",
-      item: result.Item
+      data: result.Item
     });
 
   } catch (error) {
@@ -61,7 +67,8 @@ exports.handler = async (event) => {
     // ------------------------------------------------------------
     return response(500, {
       message: "Error obteniendo item",
-      error: error.message
+      error: error.message,
+      data: null
     });
   }
 };

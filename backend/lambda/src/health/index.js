@@ -6,10 +6,12 @@ exports.handler = async () => {
   return {
     statusCode: 200,
     body: JSON.stringify({
-      status: "OK",
       message: "API funcionando correctamente",
-      timestamp: new Date().toISOString(),
-      service: "inventory-api"
+      data: {
+        status: "OK",
+        timestamp: new Date().toISOString(),
+        service: "inventory-api"
+      }
     })
   };
 

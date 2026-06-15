@@ -1,6 +1,8 @@
-const AWS = require("aws-sdk");
+const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
+const { DynamoDBDocumentClient, DeleteCommand } = require("@aws-sdk/lib-dynamodb");
 
-const dynamo = new AWS.DynamoDB.DocumentClient();
+const client = new DynamoDBClient({});
+const dynamo = DynamoDBDocumentClient.from(client);
 
 // ------------------------------------------------------------
 // 0. Helper de respuesta HTTP
@@ -20,7 +22,9 @@ exports.handler = async (event) => {
 
     if (!id) {
       return response(400, {
-        message: "ID es obligatorio"
+        message: "ID es obligatorio",
+        error: "ID es obligatorio",
+        data: null
       });
     }
 
@@ -35,17 +39,19 @@ exports.handler = async (event) => {
     // ------------------------------------------------------------
     // 3. Ejecutar DELETE en DynamoDB (con retorno)
     // ------------------------------------------------------------
-    const result = await dynamo.delete({
+    const result = await dynamo.send(new DeleteCommand({
       ...params,
       ReturnValues: "ALL_OLD"
-    }).promise();
+    }));
 
     // ------------------------------------------------------------
     // 4. Verificar si el item existía
     // ------------------------------------------------------------
     if (!result.Attributes) {
       return response(404, {
-        message: "Item no encontrado"
+        message: "Item no encontrado",
+        error: "Item no encontrado",
+        data: null
       });
     }
 
@@ -54,7 +60,7 @@ exports.handler = async (event) => {
     // ------------------------------------------------------------
     return response(200, {
       message: "Item eliminado correctamente",
-      id
+      data: { id }
     });
 
   } catch (error) {
@@ -64,7 +70,8 @@ exports.handler = async (event) => {
     // ------------------------------------------------------------
     return response(500, {
       message: "Error eliminando item",
-      error: error.message
+      error: error.message,
+      data: null
     });
   }
 };

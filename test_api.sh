@@ -1,6 +1,11 @@
 #!/bin/bash
 
-API="https://1gsklv72v4.execute-api.us-east-1.amazonaws.com/Prod"
+STACK_NAME=$1
+
+API=$(aws cloudformation describe-stacks \
+  --stack-name "$STACK_NAME" \
+  --query "Stacks[0].Outputs[?OutputKey=='ApiUrl'].OutputValue" \
+  --output text)
 
 ITEM1_ID=$(uuidgen)
 ITEM2_ID=$(uuidgen)
@@ -72,7 +77,7 @@ RES1=$(curl -s -i "$API/health")
 BODY1=$(echo "$RES1" | sed '1,/^\r$/d')
 
 assert_status "Health 200" "$RES1" "200"
-assert_json_equals "Health status OK" "$BODY1" ".status" "OK"
+assert_json_equals "Health status OK" "$BODY1" ".data.status" "OK"
 
 print_json "$BODY1"
 
@@ -87,7 +92,7 @@ echo "============================================================"
 RES_WIPE=$(curl -s -i "$API/items")
 BODY_WIPE=$(echo "$RES_WIPE" | sed '1,/^\r$/d')
 
-IDS=$(echo "$BODY_WIPE" | jq -r '.items[].id')
+IDS=$(echo "$BODY_WIPE" | jq -r '.data[].id')
 
 # Silent cleanup (NO OUTPUT)
 if [ -n "$IDS" ]; then
@@ -100,7 +105,7 @@ fi
 RES_CHECK=$(curl -s -i "$API/items")
 BODY_CHECK=$(echo "$RES_CHECK" | sed '1,/^\r$/d')
 
-COUNT=$(echo "$BODY_CHECK" | jq '.items | length')
+COUNT=$(echo "$BODY_CHECK" | jq '.data | length')
 
 if [ "$COUNT" -eq 0 ]; then
   pass "Database starts empty"
@@ -129,7 +134,7 @@ RES3=$(curl -s -i \
 BODY3=$(echo "$RES3" | sed '1,/^\r$/d')
 
 assert_status "Create item1" "$RES3" "201"
-assert_json_equals "Item1 ID match" "$BODY3" ".item.id" "$ITEM1_ID"
+assert_json_equals "Item1 ID match" "$BODY3" ".data.id" "$ITEM1_ID"
 
 print_json "$BODY3"
 
@@ -153,7 +158,7 @@ RES4=$(curl -s -i \
 BODY4=$(echo "$RES4" | sed '1,/^\r$/d')
 
 assert_status "Create item2" "$RES4" "201"
-assert_json_equals "Item2 ID match" "$BODY4" ".item.id" "$ITEM2_ID"
+assert_json_equals "Item2 ID match" "$BODY4" ".data.id" "$ITEM2_ID"
 
 print_json "$BODY4"
 
@@ -171,7 +176,7 @@ BODY5=$(echo "$RES5" | sed '1,/^\r$/d')
 assert_status "List items" "$RES5" "200"
 
 echo "Item IDs in DB:"
-echo "$BODY5" | jq -r '.items[].id'
+echo "$BODY5" | jq -r '.data[].id'
 
 print_json "$BODY5"
 
@@ -188,8 +193,8 @@ BODY6=$(echo "$RES6" | sed '1,/^\r$/d')
 
 assert_status "Get item1" "$RES6" "200"
 
-assert_json_equals "Name check" "$BODY6" ".item.name" "Laptop"
-assert_json_equals "Quantity check" "$BODY6" ".item.quantity" "5"
+assert_json_equals "Name check" "$BODY6" ".data.name" "Laptop"
+assert_json_equals "Quantity check" "$BODY6" ".data.quantity" "5"
 
 print_json "$BODY6"
 
@@ -213,8 +218,8 @@ BODY7=$(echo "$RES7" | sed '1,/^\r$/d')
 
 assert_status "Update item1" "$RES7" "200"
 
-assert_json_equals "Updated name" "$BODY7" ".item.name" "Laptop Pro"
-assert_json_equals "Updated quantity" "$BODY7" ".item.quantity" "10"
+assert_json_equals "Updated name" "$BODY7" ".data.name" "Laptop Pro"
+assert_json_equals "Updated quantity" "$BODY7" ".data.quantity" "10"
 
 print_json "$BODY7"
 
@@ -231,8 +236,8 @@ BODY8=$(echo "$RES8" | sed '1,/^\r$/d')
 
 assert_status "Get updated item1" "$RES8" "200"
 
-assert_json_equals "Updated name check" "$BODY8" ".item.name" "Laptop Pro"
-assert_json_equals "Updated quantity check" "$BODY8" ".item.quantity" "10"
+assert_json_equals "Updated name check" "$BODY8" ".data.name" "Laptop Pro"
+assert_json_equals "Updated quantity check" "$BODY8" ".data.quantity" "10"
 
 print_json "$BODY8"
 
@@ -250,7 +255,7 @@ BODY9=$(echo "$RES9" | sed '1,/^\r$/d')
 print_json "$BODY9"
 
 assert_status "Get item2 before delete" "$RES9" "200"
-assert_json_equals "Item2 ID exists" "$BODY9" ".item.id" "$ITEM2_ID"
+assert_json_equals "Item2 ID exists" "$BODY9" ".data.id" "$ITEM2_ID"
 
 # ============================================================
 # 10. DELETE item2
