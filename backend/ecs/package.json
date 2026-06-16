@@ -1,0 +1,15 @@
+{
+  "name": "inventory-ecs-api",
+  "version": "1.0.0",
+  "description": "Inventory API running on ECS",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "node src/app.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "swagger-jsdoc": "^6.3.0",
+    "swagger-ui-express": "^5.0.1"
+  }
+}

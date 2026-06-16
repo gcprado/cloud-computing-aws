@@ -3,7 +3,7 @@
 STACK_NAME=$1
 ACTION=$2
 
-BACKEND_DIR="./backend/lambda"
+BACKEND_DIR="./backend/lambda-sam"
 TEMPLATE_FILE="$BACKEND_DIR/template.yaml"
 
 print_help() {
@@ -57,10 +57,10 @@ deploy_stack() {
     exit 1
   }
 
-  sam build --template-file template.yaml
+  sam build --template-file "$TEMPLATE_FILE"
 
   sam deploy \
-    --template-file template.yaml \
+    --template-file "$TEMPLATE_FILE" \
     --stack-name "$STACK_NAME" \
     --capabilities CAPABILITY_IAM \
     --no-confirm-changeset \
