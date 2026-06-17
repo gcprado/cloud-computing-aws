@@ -70,11 +70,26 @@ echo ""
 
 echo "Uploading frontend files to S3..."
 
-# Upload HTML, CSS, JS
-aws s3 cp index.html "s3://$BUCKET_NAME/" --content-type "text/html"
-aws s3 cp styles.css "s3://$BUCKET_NAME/" --content-type "text/css"
-aws s3 cp app.js "s3://$BUCKET_NAME/" --content-type "application/javascript"
-aws s3 cp config.json "s3://$BUCKET_NAME/" --content-type "application/json"
+# Upload HTML, CSS, JS with cache control
+aws s3 cp index.html "s3://$BUCKET_NAME/" --content-type "text/html" --cache-control "max-age=0, no-cache"
+aws s3 cp styles.css "s3://$BUCKET_NAME/" --content-type "text/css" --cache-control "max-age=31536000"
+aws s3 cp app.js "s3://$BUCKET_NAME/" --content-type "application/javascript" --cache-control "max-age=0, no-cache"
+aws s3 cp config.json "s3://$BUCKET_NAME/" --content-type "application/json" --cache-control "max-age=0, no-cache"
+
+echo ""
+echo "Getting CloudFront Distribution ID..."
+DISTRIBUTION_ID=$(aws cloudformation describe-stacks \
+  --stack-name "$STACK_NAME" \
+  --query "Stacks[0].Outputs[?OutputKey=='DistributionId'].OutputValue" \
+  --output text 2>/dev/null || echo "")
+
+if [ -n "$DISTRIBUTION_ID" ]; then
+  echo "Invalidating CloudFront cache..."
+  aws cloudfront create-invalidation \
+    --distribution-id "$DISTRIBUTION_ID" \
+    --paths "/*" > /dev/null
+  echo "CloudFront cache invalidated"
+fi
 
 echo ""
 echo "Frontend deployment complete!"
@@ -94,5 +109,8 @@ echo "Available Backend APIs:"
 [ -n "$ECS_API" ] && echo "  ECS: $ECS_API" || echo "  ECS: NOT DEPLOYED"
 echo ""
 if [ -n "$WEBSITE_URL" ]; then
+  echo "Frontend URL (HTTPS): $WEBSITE_URL"
+  echo ""
+  echo "Note: CloudFront deployment may take 5-10 minutes to propagate globally."
   echo "Open the URL in your browser to access the frontend."
 fi
