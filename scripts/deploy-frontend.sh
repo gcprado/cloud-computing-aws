@@ -79,22 +79,20 @@ aws s3 cp config.json "s3://$BUCKET_NAME/" --content-type "application/json"
 echo ""
 echo "Frontend deployment complete!"
 echo ""
-echo "Fetching outputs..."
-aws cloudformation describe-stacks \
-  --stack-name "$STACK_NAME" \
-  --query "Stacks[0].Outputs" \
-  --output table
+
+cd ..
+chmod +x scripts/get-stack-status.sh 2>/dev/null || true
+bash scripts/get-stack-status.sh "$STACK_NAME"
 
 WEBSITE_URL=$(aws cloudformation describe-stacks \
   --stack-name "$STACK_NAME" \
   --query "Stacks[0].Outputs[?OutputKey=='WebsiteURL'].OutputValue" \
-  --output text)
+  --output text 2>/dev/null || echo "")
 
-echo ""
-echo "Website URL: $WEBSITE_URL"
-echo ""
-echo "Available APIs:"
+echo "Available Backend APIs:"
 [ -n "$LAMBDA_API" ] && echo "  Lambda: $LAMBDA_API" || echo "  Lambda: NOT DEPLOYED"
 [ -n "$ECS_API" ] && echo "  ECS: $ECS_API" || echo "  ECS: NOT DEPLOYED"
 echo ""
-echo "Open the URL in your browser to access the frontend."
+if [ -n "$WEBSITE_URL" ]; then
+  echo "Open the URL in your browser to access the frontend."
+fi

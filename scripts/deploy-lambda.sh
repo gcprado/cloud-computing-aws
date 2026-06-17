@@ -36,24 +36,21 @@ sam deploy \
 echo ""
 echo "Lambda deployment complete!"
 echo ""
-echo "Fetching outputs..."
-aws cloudformation describe-stacks \
-  --stack-name "$STACK_NAME" \
-  --query "Stacks[0].Outputs" \
-  --output table
+
+cd ../..
+chmod +x scripts/get-stack-status.sh 2>/dev/null || true
+bash scripts/get-stack-status.sh "$STACK_NAME"
 
 API_URL=$(aws cloudformation describe-stacks \
   --stack-name "$STACK_NAME" \
   --query "Stacks[0].Outputs[?OutputKey=='ApiUrl'].OutputValue" \
-  --output text)
-
-echo ""
-echo "API URL: $API_URL"
-echo ""
+  --output text 2>/dev/null || echo "")
 
 # Update frontend config if deployed
-chmod +x ../../scripts/update-frontend-config.sh 2>/dev/null || true
-bash ../../scripts/update-frontend-config.sh 2>/dev/null || true
+chmod +x scripts/update-frontend-config.sh 2>/dev/null || true
+bash scripts/update-frontend-config.sh 2>/dev/null || true
 
-echo "Test with:"
-echo "  curl $API_URL/health"
+if [ -n "$API_URL" ]; then
+  echo "Test with:"
+  echo "  curl $API_URL/health"
+fi
