@@ -1,22 +1,19 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Static website hosting with CloudFront (HTTPS) for Inventory Manager frontend
+Description: Static website hosting on S3 for Inventory Manager frontend
 
 Resources:
   WebsiteBucket:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: !Sub 'inventory-frontend-${AWS::AccountId}'
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: index.html
       PublicAccessBlockConfiguration:
-        BlockPublicAcls: true
-        BlockPublicPolicy: true
-        IgnorePublicAcls: true
-        RestrictPublicBuckets: true
-
-  CloudFrontOriginAccessIdentity:
-    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
-    Properties:
-      CloudFrontOriginAccessIdentityConfig:
-        Comment: !Sub 'OAI for inventory-frontend-${AWS::AccountId}'
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
 
   WebsiteBucketPolicy:
     Type: AWS::S3::BucketPolicy
@@ -24,67 +21,17 @@ Resources:
       Bucket: !Ref WebsiteBucket
       PolicyDocument:
         Statement:
-          - Sid: CloudFrontReadGetObject
+          - Sid: PublicReadGetObject
             Effect: Allow
-            Principal:
-              CanonicalUser: !GetAtt CloudFrontOriginAccessIdentity.S3CanonicalUserId
+            Principal: '*'
             Action: 's3:GetObject'
             Resource: !Sub '${WebsiteBucket.Arn}/*'
 
-  CloudFrontDistribution:
-    Type: AWS::CloudFront::Distribution
-    Properties:
-      DistributionConfig:
-        Enabled: true
-        DefaultRootObject: index.html
-        Comment: CloudFront distribution for Inventory Manager frontend
-        Origins:
-          - Id: S3Origin
-            DomainName: !GetAtt WebsiteBucket.RegionalDomainName
-            S3OriginConfig:
-              OriginAccessIdentity: !Sub 'origin-access-identity/cloudfront/${CloudFrontOriginAccessIdentity}'
-        DefaultCacheBehavior:
-          TargetOriginId: S3Origin
-          ViewerProtocolPolicy: redirect-to-https
-          AllowedMethods:
-            - GET
-            - HEAD
-            - OPTIONS
-          CachedMethods:
-            - GET
-            - HEAD
-            - OPTIONS
-          ForwardedValues:
-            QueryString: false
-            Cookies:
-              Forward: none
-          Compress: true
-          DefaultTTL: 86400
-          MinTTL: 0
-          MaxTTL: 31536000
-        CustomErrorResponses:
-          - ErrorCode: 403
-            ResponseCode: 200
-            ResponsePagePath: /index.html
-          - ErrorCode: 404
-            ResponseCode: 200
-            ResponsePagePath: /index.html
-        ViewerCertificate:
-          CloudFrontDefaultCertificate: true
-
 Outputs:
   WebsiteURL:
-    Description: CloudFront HTTPS URL
-    Value: !Sub 'https://${CloudFrontDistribution.DomainName}'
-  
-  CloudFrontDomainName:
-    Description: CloudFront Domain Name
-    Value: !GetAtt CloudFrontDistribution.DomainName
+    Description: S3 Website URL
+    Value: !GetAtt WebsiteBucket.WebsiteURL
   
   BucketName:
     Description: S3 Bucket Name
     Value: !Ref WebsiteBucket
-  
-  DistributionId:
-    Description: CloudFront Distribution ID
-    Value: !Ref CloudFrontDistribution

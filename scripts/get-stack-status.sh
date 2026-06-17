@@ -49,12 +49,10 @@ if [ -n "$OUTPUTS" ] && [ "$OUTPUTS" != "null" ]; then
   BUCKET_NAME=$(echo "$OUTPUTS" | jq -r '.[] | select(.OutputKey=="BucketName") | .OutputValue' 2>/dev/null)
   TABLE_NAME=$(echo "$OUTPUTS" | jq -r '.[] | select(.OutputKey=="TableName") | .OutputValue' 2>/dev/null)
   CLUSTER_NAME=$(echo "$OUTPUTS" | jq -r '.[] | select(.OutputKey=="ClusterName") | .OutputValue' 2>/dev/null)
-  DISTRIBUTION_ID=$(echo "$OUTPUTS" | jq -r '.[] | select(.OutputKey=="DistributionId") | .OutputValue' 2>/dev/null)
   
   [ -n "$API_URL" ] && [ "$API_URL" != "null" ] && echo "  API URL: $API_URL"
-  [ -n "$WEBSITE_URL" ] && [ "$WEBSITE_URL" != "null" ] && echo "  Website URL (HTTPS): $WEBSITE_URL"
+  [ -n "$WEBSITE_URL" ] && [ "$WEBSITE_URL" != "null" ] && echo "  Website URL: $WEBSITE_URL"
   [ -n "$BUCKET_NAME" ] && [ "$BUCKET_NAME" != "null" ] && echo "  S3 Bucket: $BUCKET_NAME"
-  [ -n "$DISTRIBUTION_ID" ] && [ "$DISTRIBUTION_ID" != "null" ] && echo "  CloudFront Distribution: $DISTRIBUTION_ID"
   [ -n "$TABLE_NAME" ] && [ "$TABLE_NAME" != "null" ] && echo "  DynamoDB Table: $TABLE_NAME"
   [ -n "$CLUSTER_NAME" ] && [ "$CLUSTER_NAME" != "null" ] && echo "  ECS Cluster: $CLUSTER_NAME"
   
