@@ -9,6 +9,11 @@ Globals:
     Environment:
       Variables:
         TABLE_NAME: InventoryItemsLambda
+  Api:
+    Cors:
+      AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
+      AllowHeaders: "'Content-Type,Authorization'"
+      AllowOrigin: "'*'"
 
 Resources:
 
