@@ -138,6 +138,23 @@ Resources:
       ServiceName: !Sub com.amazonaws.${AWS::Region}.s3
       RouteTableIds: [!Ref RouteTable]
 
+  DynamoDBEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcEndpointType: Gateway
+      VpcId: !Ref VPC
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.dynamodb
+      RouteTableIds: [!Ref RouteTable]
+
+# =========================
+# CLOUDWATCH LOGS
+# =========================
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /ecs/inventory-api
+      RetentionInDays: 7
+
 # =========================
 # ECS
 # =========================
@@ -164,6 +181,12 @@ Resources:
           Environment:
             - Name: TABLE_NAME
               Value: !Ref InventoryTable
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref LogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: ecs
 
 # =========================
 # ECS SERVICE
@@ -203,6 +226,11 @@ Resources:
       Protocol: TCP
       Port: 3000
       TargetType: ip
+      HealthCheckEnabled: true
+      HealthCheckProtocol: TCP
+      HealthCheckIntervalSeconds: 30
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 2
 
   Listener:
     Type: AWS::ElasticLoadBalancingV2::Listener
@@ -264,6 +292,88 @@ Resources:
         ConnectionId: !Ref VpcLink
         Uri: !Sub "http://${NLB.DNSName}:80/items"
 
+  ResourceItemsId:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ParentId: !Ref ResourceItems
+      PathPart: "{id}"
+
+  GetItemById:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ResourceId: !Ref ResourceItemsId
+      HttpMethod: GET
+      AuthorizationType: NONE
+      RequestParameters:
+        method.request.path.id: true
+      Integration:
+        Type: HTTP_PROXY
+        IntegrationHttpMethod: GET
+        ConnectionType: VPC_LINK
+        ConnectionId: !Ref VpcLink
+        Uri: !Sub "http://${NLB.DNSName}:80/items/{id}"
+        RequestParameters:
+          integration.request.path.id: method.request.path.id
+
+  UpdateItem:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ResourceId: !Ref ResourceItemsId
+      HttpMethod: PUT
+      AuthorizationType: NONE
+      RequestParameters:
+        method.request.path.id: true
+      Integration:
+        Type: HTTP_PROXY
+        IntegrationHttpMethod: PUT
+        ConnectionType: VPC_LINK
+        ConnectionId: !Ref VpcLink
+        Uri: !Sub "http://${NLB.DNSName}:80/items/{id}"
+        RequestParameters:
+          integration.request.path.id: method.request.path.id
+
+  DeleteItem:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ResourceId: !Ref ResourceItemsId
+      HttpMethod: DELETE
+      AuthorizationType: NONE
+      RequestParameters:
+        method.request.path.id: true
+      Integration:
+        Type: HTTP_PROXY
+        IntegrationHttpMethod: DELETE
+        ConnectionType: VPC_LINK
+        ConnectionId: !Ref VpcLink
+        Uri: !Sub "http://${NLB.DNSName}:80/items/{id}"
+        RequestParameters:
+          integration.request.path.id: method.request.path.id
+
+  ResourceHealth:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ParentId: !GetAtt ApiGateway.RootResourceId
+      PathPart: health
+
+  GetHealth:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ResourceId: !Ref ResourceHealth
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        Type: HTTP_PROXY
+        IntegrationHttpMethod: GET
+        ConnectionType: VPC_LINK
+        ConnectionId: !Ref VpcLink
+        Uri: !Sub "http://${NLB.DNSName}:80/health"
+
 # =========================
 # DEPLOYMENT
 # =========================
@@ -272,6 +382,10 @@ Resources:
     DependsOn:
       - GetItems
       - PostItems
+      - GetItemById
+      - UpdateItem
+      - DeleteItem
+      - GetHealth
     Properties:
       RestApiId: !Ref ApiGateway
 
@@ -287,4 +401,17 @@ Resources:
 # =========================
 Outputs:
   ApiUrl:
+    Description: API Gateway URL
     Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/prod"
+  
+  TableName:
+    Description: DynamoDB Table Name
+    Value: !Ref InventoryTable
+  
+  ApiGatewayId:
+    Description: API Gateway ID
+    Value: !Ref ApiGateway
+  
+  ClusterName:
+    Description: ECS Cluster Name
+    Value: !Ref Cluster
