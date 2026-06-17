@@ -8,14 +8,14 @@ Globals:
     MemorySize: 128
     Environment:
       Variables:
-        TABLE_NAME: InventoryItems
+        TABLE_NAME: InventoryItemsLambda
 
 Resources:
 
   InventoryTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: InventoryItems
+      TableName: InventoryItemsLambda
       AttributeDefinitions:
         - AttributeName: id
           AttributeType: S

@@ -20,7 +20,7 @@ Resources:
   InventoryTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: InventoryItems
+      TableName: InventoryItemsECS
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
         - AttributeName: id
