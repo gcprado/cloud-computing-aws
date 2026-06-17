@@ -59,6 +59,8 @@ make_executable() {
   chmod +x scripts/test-frontend.sh 2>/dev/null || true
   chmod +x scripts/destroy-lambda.sh 2>/dev/null || true
   chmod +x scripts/destroy-ecs.sh 2>/dev/null || true
+  chmod +x scripts/destroy-frontend.sh 2>/dev/null || true
+  chmod +x scripts/update-frontend-config.sh 2>/dev/null || true
   chmod +x test_api.sh 2>/dev/null || true
 }
 

@@ -50,5 +50,10 @@ API_URL=$(aws cloudformation describe-stacks \
 echo ""
 echo "API URL: $API_URL"
 echo ""
+
+# Update frontend config if deployed
+chmod +x ../../scripts/update-frontend-config.sh 2>/dev/null || true
+bash ../../scripts/update-frontend-config.sh 2>/dev/null || true
+
 echo "Test with:"
 echo "  curl $API_URL/health"
