@@ -18,6 +18,7 @@ print_help() {
   echo "  ./infra-script.sh deploy <target>"
   echo "  ./infra-script.sh destroy <target>"
   echo "  ./infra-script.sh test <target>"
+  echo "  ./infra-script.sh status <target>"
   echo "  ./infra-script.sh --help"
   echo ""
   echo "Targets:"
@@ -35,6 +36,7 @@ print_help() {
   echo "  ./infra-script.sh destroy all"
   echo "  ./infra-script.sh test lambda"
   echo "  ./infra-script.sh test frontend"
+  echo "  ./infra-script.sh status all"
   echo ""
 }
 
@@ -61,6 +63,10 @@ make_executable() {
   chmod +x scripts/destroy-ecs.sh 2>/dev/null || true
   chmod +x scripts/destroy-frontend.sh 2>/dev/null || true
   chmod +x scripts/update-frontend-config.sh 2>/dev/null || true
+  chmod +x scripts/status-lambda.sh 2>/dev/null || true
+  chmod +x scripts/status-ecs.sh 2>/dev/null || true
+  chmod +x scripts/status-frontend.sh 2>/dev/null || true
+  chmod +x scripts/get-stack-status.sh 2>/dev/null || true
   chmod +x test_api.sh 2>/dev/null || true
 }
 
@@ -81,6 +87,8 @@ case "$ACTION" in
       all)
         echo "Deploying both architectures + frontend..."
         echo ""
+        echo "Deploying in order (Frontend -> Lambda -> ECS)..."
+        echo ""
         ./scripts/deploy-lambda.sh "$LAMBDA_STACK"
         echo ""
         echo "=================================================="
@@ -89,7 +97,7 @@ case "$ACTION" in
         echo ""
         echo "=================================================="
         echo ""
-        ./scripts/deploy-ecs.sh "$FRONTEND_STACK"
+        ./scripts/deploy-frontend.sh "$FRONTEND_STACK"
         echo ""
         echo "All deployments complete!"
         ;;
@@ -115,7 +123,7 @@ case "$ACTION" in
       all)
         echo "Destroying both architectures + frontend..."
         echo ""
-        echo "Destroying in reverse order (ECS first, then Lambda, then Frontend)..."
+        echo "Destroying in reverse order (ECS -> Lambda -> Frontend)..."
         echo ""
         ./scripts/destroy-ecs.sh "$ECS_STACK"
         echo ""
@@ -162,6 +170,32 @@ case "$ACTION" in
         ./scripts/test-frontend.sh "$FRONTEND_STACK"
         echo ""
         echo "All tests complete!"
+        ;;
+      *)
+        echo "Invalid target: $TARGET"
+        print_help
+        exit 1
+        ;;
+    esac
+    ;;
+
+  status)
+    case "$TARGET" in
+      lambda)
+        ./scripts/status-lambda.sh "$LAMBDA_STACK"
+        ;;
+      ecs)
+        ./scripts/status-ecs.sh "$ECS_STACK"
+        ;;
+      frontend)
+        ./scripts/status-frontend.sh "$FRONTEND_STACK"
+        ;;
+      all)
+        echo "Checking all stacks status..."
+        echo ""
+        ./scripts/status-lambda.sh "$LAMBDA_STACK"
+        ./scripts/status-ecs.sh "$ECS_STACK"
+        ./scripts/status-frontend.sh "$FRONTEND_STACK"
         ;;
       *)
         echo "Invalid target: $TARGET"
