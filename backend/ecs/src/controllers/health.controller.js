@@ -1,6 +1,8 @@
 const healthCheck = (req, res) => {
   res.status(200).json({
-    status: "healthy"
+    data: {
+      status: "OK"
+    }
   });
 };
 
