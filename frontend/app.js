@@ -1,4 +1,22 @@
 let API_URL = '';
+let CONFIG = null;
+
+// Load configuration on page load
+async function loadConfig() {
+  try {
+    const response = await fetch('/config.json');
+    if (response.ok) {
+      CONFIG = await response.json();
+      console.log('Configuration loaded:', CONFIG);
+    } else {
+      console.warn('config.json not found, using manual mode only');
+      CONFIG = { api: { lambda: '', ecs: '' } };
+    }
+  } catch (error) {
+    console.warn('Failed to load config.json:', error.message);
+    CONFIG = { api: { lambda: '', ecs: '' } };
+  }
+}
 
 function generateUUID() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
@@ -8,23 +26,94 @@ function generateUUID() {
   });
 }
 
+function updateUrlField() {
+  const select = document.getElementById('api-select');
+  const urlInput = document.getElementById('custom-api-url');
+  const selectedOption = select.value;
+  
+  if (!CONFIG) return;
+  
+  if (selectedOption === 'lambda') {
+    if (CONFIG.api.lambda && CONFIG.api.lambda !== '') {
+      urlInput.value = CONFIG.api.lambda;
+      urlInput.disabled = true;
+      urlInput.style.backgroundColor = '#f5f5f5';
+    } else {
+      urlInput.value = 'Lambda not deployed';
+      urlInput.disabled = true;
+      urlInput.style.backgroundColor = '#ffebee';
+    }
+  } else if (selectedOption === 'ecs') {
+    if (CONFIG.api.ecs && CONFIG.api.ecs !== '') {
+      urlInput.value = CONFIG.api.ecs;
+      urlInput.disabled = true;
+      urlInput.style.backgroundColor = '#f5f5f5';
+    } else {
+      urlInput.value = 'ECS not deployed';
+      urlInput.disabled = true;
+      urlInput.style.backgroundColor = '#ffebee';
+    }
+  } else if (selectedOption === 'manual') {
+    urlInput.value = '';
+    urlInput.disabled = false;
+    urlInput.style.backgroundColor = '';
+    urlInput.placeholder = 'Enter custom API URL';
+  } else {
+    urlInput.value = '';
+    urlInput.disabled = true;
+    urlInput.style.backgroundColor = '#f5f5f5';
+    urlInput.placeholder = 'Select an API source first';
+  }
+}
+
 function setApiUrl() {
   const select = document.getElementById('api-select');
   const customUrl = document.getElementById('custom-api-url').value.trim();
+  const selectedOption = select.value;
   
-  if (customUrl) {
-    API_URL = customUrl.replace(/\/$/, '');
-    showStatus(`Custom API URL set: ${API_URL}`, 'success');
-  } else if (select.value) {
-    const stackSuffix = select.value === 'lambda' ? 'lambda' : 'ecs';
-    showStatus(`Please enter your ${select.value.toUpperCase()} API URL manually`, 'info');
-    return;
-  } else {
-    showStatus('Please select an architecture or enter a custom URL', 'error');
+  // Manual API input
+  if (selectedOption === 'manual') {
+    if (customUrl) {
+      API_URL = customUrl.replace(/\/$/, '');
+      showStatus(`Custom API URL set: ${API_URL}`, 'success');
+      loadItems();
+    } else {
+      showStatus('Please enter an API URL in the text field', 'error');
+    }
     return;
   }
   
-  loadItems();
+  // Lambda or ECS from config
+  if (!CONFIG) {
+    showStatus('Configuration not loaded yet, please wait...', 'error');
+    return;
+  }
+  
+  if (selectedOption === 'lambda') {
+    if (CONFIG.api.lambda && CONFIG.api.lambda !== '') {
+      API_URL = CONFIG.api.lambda;
+      showStatus(`Lambda API set: ${API_URL}`, 'success');
+      loadItems();
+    } else {
+      showStatus('Lambda API not deployed yet. Deploy it first using: ./infra-script.sh deploy lambda', 'error');
+    }
+    return;
+  }
+  
+  if (selectedOption === 'ecs') {
+    if (CONFIG.api.ecs && CONFIG.api.ecs !== '') {
+      API_URL = CONFIG.api.ecs;
+      showStatus(`ECS API set: ${API_URL}`, 'success');
+      loadItems();
+    } else {
+      showStatus('ECS API not deployed yet. Deploy it first using: ./infra-script.sh deploy ecs', 'error');
+    }
+    return;
+  }
+  
+  if (selectedOption === '') {
+    showStatus('Please select an API source', 'error');
+  }
 }
 
 function showStatus(message, type = 'info') {
@@ -242,4 +331,15 @@ window.onclick = function(event) {
   }
 }
 
-document.getElementById('item-id').value = generateUUID();
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+  loadConfig();
+  document.getElementById('item-id').value = generateUUID();
+  
+  // Add event listener to update URL field when selection changes
+  const apiSelect = document.getElementById('api-select');
+  apiSelect.addEventListener('change', updateUrlField);
+  
+  // Initialize URL field state
+  updateUrlField();
+});
