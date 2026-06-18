@@ -54,10 +54,8 @@ function updateUrlField() {
   const urlInput = document.getElementById('custom-api-url');
   const selectedOption = select.value;
   
-  if (!CONFIG) return;
-  
   if (selectedOption === 'lambda') {
-    if (CONFIG.api.lambda && CONFIG.api.lambda !== '') {
+    if (CONFIG && CONFIG.api.lambda && CONFIG.api.lambda !== '') {
       urlInput.value = CONFIG.api.lambda;
       urlInput.disabled = true;
       urlInput.style.backgroundColor = '#f5f5f5';
@@ -67,7 +65,7 @@ function updateUrlField() {
       urlInput.style.backgroundColor = '#ffebee';
     }
   } else if (selectedOption === 'ecs') {
-    if (CONFIG.api.ecs && CONFIG.api.ecs !== '') {
+    if (CONFIG && CONFIG.api.ecs && CONFIG.api.ecs !== '') {
       urlInput.value = CONFIG.api.ecs;
       urlInput.disabled = true;
       urlInput.style.backgroundColor = '#f5f5f5';
