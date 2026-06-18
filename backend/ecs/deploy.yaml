@@ -452,6 +452,48 @@ Resources:
             method.response.header.Access-Control-Allow-Methods: true
             method.response.header.Access-Control-Allow-Origin: true
 
+  ResourceDocs:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ParentId: !GetAtt ApiGateway.RootResourceId
+      PathPart: docs
+
+  GetDocs:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ResourceId: !Ref ResourceDocs
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        Type: HTTP_PROXY
+        IntegrationHttpMethod: GET
+        ConnectionType: VPC_LINK
+        ConnectionId: !Ref VpcLink
+        Uri: !Sub "http://${NLB.DNSName}:80/docs"
+
+  ResourceOpenApi:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ParentId: !GetAtt ApiGateway.RootResourceId
+      PathPart: openapi.json
+
+  GetOpenApi:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ResourceId: !Ref ResourceOpenApi
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        Type: HTTP_PROXY
+        IntegrationHttpMethod: GET
+        ConnectionType: VPC_LINK
+        ConnectionId: !Ref VpcLink
+        Uri: !Sub "http://${NLB.DNSName}:80/openapi.json"
+
 # =========================
 # DEPLOYMENT
 # =========================
@@ -467,6 +509,8 @@ Resources:
       - OptionsItemsId
       - GetHealth
       - OptionsHealth
+      - GetDocs
+      - GetOpenApi
     Properties:
       RestApiId: !Ref ApiGateway
 

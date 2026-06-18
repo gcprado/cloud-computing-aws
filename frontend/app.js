@@ -1,10 +1,15 @@
 let API_URL = '';
 let CONFIG = null;
 
-function updateApiSourceLabel(labelText) {
+function updateApiSourceLabel(labelText, apiType = null) {
   const label = document.getElementById('api-source-label');
   if (!label) return;
-  label.textContent = `Active API: ${labelText}`;
+  
+  if (apiType === 'lambda' || apiType === 'ecs') {
+    label.innerHTML = `Active API: ${labelText} (<a href="${API_URL}/docs" target="_blank" style="color: inherit; text-decoration: underline;">see documentation</a>)`;
+  } else {
+    label.textContent = `Active API: ${labelText}`;
+  }
 }
 
 function showSnackbar(message, type = 'info') {
@@ -112,7 +117,7 @@ function setApiUrl() {
     if (CONFIG.api.lambda && CONFIG.api.lambda !== '') {
       API_URL = CONFIG.api.lambda;
       showSnackbar('Lambda API connected', 'success');
-      updateApiSourceLabel('Lambda (from config)');
+      updateApiSourceLabel('Lambda', 'lambda');
       loadItems();
     } else {
       showSnackbar('Lambda API not deployed', 'error');
@@ -124,7 +129,7 @@ function setApiUrl() {
     if (CONFIG.api.ecs && CONFIG.api.ecs !== '') {
       API_URL = CONFIG.api.ecs;
       showSnackbar('ECS API connected', 'success');
-      updateApiSourceLabel('ECS (from config)');
+      updateApiSourceLabel('ECS', 'ecs');
       loadItems();
     } else {
       showSnackbar('ECS API not deployed', 'error');

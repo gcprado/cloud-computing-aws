@@ -113,6 +113,25 @@ Resources:
             Path: /health
             Method: GET
 
+  DocsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: api-docs
+      Handler: index.handler
+      CodeUri: src/docs/
+      Role: arn:aws:iam::186019336293:role/LabRole
+      Events:
+        DocsAPI:
+          Type: Api
+          Properties:
+            Path: /docs
+            Method: GET
+        OpenApiAPI:
+          Type: Api
+          Properties:
+            Path: /openapi.json
+            Method: GET
+
 Outputs:
   ApiUrl:
     Description: API URL
