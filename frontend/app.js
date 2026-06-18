@@ -1,6 +1,24 @@
 let API_URL = '';
 let CONFIG = null;
 
+function updateApiSourceLabel(labelText) {
+  const label = document.getElementById('api-source-label');
+  if (!label) return;
+  label.textContent = `Active API: ${labelText}`;
+}
+
+function showSnackbar(message, type = 'info') {
+  const snackbar = document.getElementById('snackbar');
+  if (!snackbar) return;
+  
+  snackbar.textContent = message;
+  snackbar.className = `snackbar ${type} show`;
+  
+  setTimeout(() => {
+    snackbar.className = snackbar.className.replace('show', '');
+  }, 3000);
+}
+
 // Load configuration on page load
 async function loadConfig() {
   try {
@@ -75,27 +93,29 @@ function setApiUrl() {
   if (selectedOption === 'manual') {
     if (customUrl) {
       API_URL = customUrl.replace(/\/$/, '');
-      showStatus(`Custom API URL set: ${API_URL}`, 'success');
+      showSnackbar('Custom API URL set', 'success');
+      updateApiSourceLabel('Manual URL');
       loadItems();
     } else {
-      showStatus('Please enter an API URL in the text field', 'error');
+      showSnackbar('Please enter an API URL', 'error');
     }
     return;
   }
   
   // Lambda or ECS from config
   if (!CONFIG) {
-    showStatus('Configuration not loaded yet, please wait...', 'error');
+    showSnackbar('Configuration not loaded yet', 'error');
     return;
   }
   
   if (selectedOption === 'lambda') {
     if (CONFIG.api.lambda && CONFIG.api.lambda !== '') {
       API_URL = CONFIG.api.lambda;
-      showStatus(`Lambda API set: ${API_URL}`, 'success');
+      showSnackbar('Lambda API connected', 'success');
+      updateApiSourceLabel('Lambda (from config)');
       loadItems();
     } else {
-      showStatus('Lambda API not deployed yet. Deploy it first using: ./infra-script.sh deploy lambda', 'error');
+      showSnackbar('Lambda API not deployed', 'error');
     }
     return;
   }
@@ -103,32 +123,23 @@ function setApiUrl() {
   if (selectedOption === 'ecs') {
     if (CONFIG.api.ecs && CONFIG.api.ecs !== '') {
       API_URL = CONFIG.api.ecs;
-      showStatus(`ECS API set: ${API_URL}`, 'success');
+      showSnackbar('ECS API connected', 'success');
+      updateApiSourceLabel('ECS (from config)');
       loadItems();
     } else {
-      showStatus('ECS API not deployed yet. Deploy it first using: ./infra-script.sh deploy ecs', 'error');
+      showSnackbar('ECS API not deployed', 'error');
     }
     return;
   }
   
   if (selectedOption === '') {
-    showStatus('Please select an API source', 'error');
+    showSnackbar('Please select an API source', 'error');
   }
-}
-
-function showStatus(message, type = 'info') {
-  const statusDiv = document.getElementById('status');
-  statusDiv.textContent = message;
-  statusDiv.className = `status ${type}`;
-  
-  setTimeout(() => {
-    statusDiv.className = 'status';
-  }, 5000);
 }
 
 async function testHealth() {
   if (!API_URL) {
-    showStatus('Please set an API URL first', 'error');
+    showSnackbar('Please set an API URL first', 'error');
     return;
   }
   
@@ -137,33 +148,41 @@ async function testHealth() {
     const data = await response.json();
     
     if (response.ok && data.data && data.data.status === 'OK') {
-      showStatus('✅ API is healthy!', 'success');
+      showSnackbar('API is healthy!', 'success');
     } else {
-      showStatus('⚠️ API responded but health check failed', 'error');
+      showSnackbar('API responded but health check failed', 'error');
     }
   } catch (error) {
-    showStatus(`❌ Health check failed: ${error.message}`, 'error');
+    showSnackbar('Health check failed: Unable to connect', 'error');
   }
 }
 
 async function loadItems() {
   if (!API_URL) {
-    showStatus('Please set an API URL first', 'error');
+    showSnackbar('Please set an API URL first', 'error');
     return;
   }
   
   try {
     const response = await fetch(`${API_URL}/items`);
-    const data = await response.json();
     
     if (!response.ok) {
-      throw new Error(data.error || 'Failed to load items');
+      showSnackbar('Failed to load items from API', 'error');
+      displayItems([]);
+      return;
     }
     
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      showSnackbar('Invalid API response. Check your API URL.', 'error');
+      displayItems([]);
+      return;
+    }
+    
+    const data = await response.json();
     displayItems(data.data || []);
-    showStatus(`Loaded ${data.data.length} items`, 'success');
   } catch (error) {
-    showStatus(`Error loading items: ${error.message}`, 'error');
+    showSnackbar('Error loading items. Check API connection.', 'error');
     displayItems([]);
   }
 }
@@ -174,7 +193,7 @@ function displayItems(items) {
   if (items.length === 0) {
     container.innerHTML = `
       <div class="empty-state">
-        <p>📭 No items found</p>
+        <p>No items found</p>
         <p>Create your first item using the form</p>
       </div>
     `;
@@ -194,8 +213,8 @@ function displayItems(items) {
       ${item.category ? `<div class="item-details"><strong>Category:</strong> ${item.category}</div>` : ''}
       ${item.unit_value ? `<div class="item-details"><strong>Unit Value:</strong> $${item.unit_value}</div>` : ''}
       <div class="item-actions">
-        <button class="btn-edit" onclick='openEditModal(${JSON.stringify(item)})'>✏️ Edit</button>
-        <button class="btn-delete" onclick="deleteItem('${item.id}')">🗑️ Delete</button>
+        <button class="btn-edit" onclick='openEditModal(${JSON.stringify(item)})'>Edit</button>
+        <button class="btn-delete" onclick='openDeleteModal(${JSON.stringify(item)})'>Delete</button>
       </div>
     </div>
   `).join('');
@@ -205,7 +224,7 @@ async function createItem(event) {
   event.preventDefault();
   
   if (!API_URL) {
-    showStatus('Please set an API URL first', 'error');
+    showSnackbar('Please set an API URL first', 'error');
     return;
   }
   
@@ -233,11 +252,12 @@ async function createItem(event) {
       throw new Error(data.error || 'Failed to create item');
     }
     
-    showStatus('✅ Item created successfully!', 'success');
+    showSnackbar('Item created successfully!', 'success');
     document.getElementById('create-form').reset();
+    document.getElementById('item-id').value = generateUUID();
     loadItems();
   } catch (error) {
-    showStatus(`❌ Error creating item: ${error.message}`, 'error');
+    showSnackbar('Error creating item', 'error');
   }
 }
 
@@ -260,7 +280,7 @@ async function updateItem(event) {
   event.preventDefault();
   
   if (!API_URL) {
-    showStatus('Please set an API URL first', 'error');
+    showSnackbar('Please set an API URL first', 'error');
     return;
   }
   
@@ -288,46 +308,67 @@ async function updateItem(event) {
       throw new Error(data.error || 'Failed to update item');
     }
     
-    showStatus('✅ Item updated successfully!', 'success');
+    showSnackbar('Item updated successfully!', 'success');
     closeEditModal();
     loadItems();
   } catch (error) {
-    showStatus(`❌ Error updating item: ${error.message}`, 'error');
+    showSnackbar('Error updating item', 'error');
   }
 }
 
-async function deleteItem(id) {
-  if (!confirm(`Are you sure you want to delete item ${id}?`)) {
-    return;
-  }
+let deleteItemId = null;
+let deleteItemName = null;
+
+function openDeleteModal(item) {
+  deleteItemId = item.id;
+  deleteItemName = item.name;
   
-  if (!API_URL) {
-    showStatus('Please set an API URL first', 'error');
-    return;
-  }
+  const modal = document.getElementById('delete-modal');
+  const preview = document.getElementById('delete-item-preview');
+  
+  preview.textContent = `${item.name} (ID: ${item.id})`;
+  modal.style.display = 'block';
+}
+
+function closeDeleteModal() {
+  const modal = document.getElementById('delete-modal');
+  modal.style.display = 'none';
+  deleteItemId = null;
+  deleteItemName = null;
+}
+
+async function confirmDelete() {
+  if (!deleteItemId) return;
   
   try {
-    const response = await fetch(`${API_URL}/items/${id}`, {
+    const response = await fetch(`${API_URL}/items/${deleteItemId}`, {
       method: 'DELETE'
     });
-    
+
     const data = await response.json();
     
     if (!response.ok) {
       throw new Error(data.error || 'Failed to delete item');
     }
     
-    showStatus('✅ Item deleted successfully!', 'success');
+    showSnackbar('Item deleted successfully!', 'success');
+    closeDeleteModal();
     loadItems();
   } catch (error) {
-    showStatus(`❌ Error deleting item: ${error.message}`, 'error');
+    showSnackbar('Error deleting item', 'error');
+    closeDeleteModal();
   }
 }
 
 window.onclick = function(event) {
-  const modal = document.getElementById('edit-modal');
-  if (event.target === modal) {
+  const editModal = document.getElementById('edit-modal');
+  const deleteModal = document.getElementById('delete-modal');
+  
+  if (event.target === editModal) {
     closeEditModal();
+  }
+  if (event.target === deleteModal) {
+    closeDeleteModal();
   }
 }
 

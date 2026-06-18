@@ -26,7 +26,16 @@
       <button onclick="testHealth()">Test Health</button>
     </div>
 
-    <div id="status" class="status"></div>
+    <div class="api-info" id="api-source-info">
+      <svg class="info-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="16" x2="12" y2="12"></line>
+        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+      </svg>
+      <span id="api-source-label">Active API: Not set</span>
+    </div>
+
+    <div id="snackbar" class="snackbar"></div>
 
     <main>
       <section class="form-section">
@@ -99,6 +108,19 @@
         <button type="submit">Update Item</button>
         <button type="button" onclick="closeEditModal()">Cancel</button>
       </form>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div id="delete-modal" class="modal">
+    <div class="modal-content delete-modal-content">
+      <h3>Confirm Deletion</h3>
+      <p>Are you sure you want to delete this item?</p>
+      <p class="item-preview" id="delete-item-preview"></p>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeDeleteModal()">Cancel</button>
+        <button class="btn-delete" onclick="confirmDelete()">Delete</button>
+      </div>
     </div>
   </div>
 
