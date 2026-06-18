@@ -53,21 +53,21 @@ if [ -z "$TARGET" ]; then
 fi
 
 make_executable() {
-  chmod +x scripts/deploy-lambda.sh 2>/dev/null || true
-  chmod +x scripts/deploy-ecs.sh 2>/dev/null || true
-  chmod +x scripts/deploy-frontend.sh 2>/dev/null || true
-  chmod +x scripts/test-lambda.sh 2>/dev/null || true
-  chmod +x scripts/test-ecs.sh 2>/dev/null || true
-  chmod +x scripts/test-frontend.sh 2>/dev/null || true
-  chmod +x scripts/destroy-lambda.sh 2>/dev/null || true
-  chmod +x scripts/destroy-ecs.sh 2>/dev/null || true
-  chmod +x scripts/destroy-frontend.sh 2>/dev/null || true
+  chmod +x scripts/deploy/deploy-lambda.sh 2>/dev/null || true
+  chmod +x scripts/deploy/deploy-ecs.sh 2>/dev/null || true
+  chmod +x scripts/deploy/deploy-frontend.sh 2>/dev/null || true
+  chmod +x scripts/test/test-lambda.sh 2>/dev/null || true
+  chmod +x scripts/test/test-ecs.sh 2>/dev/null || true
+  chmod +x scripts/test/test-frontend.sh 2>/dev/null || true
+  chmod +x scripts/test/test-api.sh 2>/dev/null || true
+  chmod +x scripts/destroy/destroy-lambda.sh 2>/dev/null || true
+  chmod +x scripts/destroy/destroy-ecs.sh 2>/dev/null || true
+  chmod +x scripts/destroy/destroy-frontend.sh 2>/dev/null || true
   chmod +x scripts/update-frontend-config.sh 2>/dev/null || true
-  chmod +x scripts/status-lambda.sh 2>/dev/null || true
-  chmod +x scripts/status-ecs.sh 2>/dev/null || true
-  chmod +x scripts/status-frontend.sh 2>/dev/null || true
-  chmod +x scripts/get-stack-status.sh 2>/dev/null || true
-  chmod +x test_api.sh 2>/dev/null || true
+  chmod +x scripts/status/status-lambda.sh 2>/dev/null || true
+  chmod +x scripts/status/status-ecs.sh 2>/dev/null || true
+  chmod +x scripts/status/status-frontend.sh 2>/dev/null || true
+  chmod +x scripts/status/get-stack-status.sh 2>/dev/null || true
 }
 
 make_executable
@@ -76,28 +76,28 @@ case "$ACTION" in
   deploy)
     case "$TARGET" in
       lambda)
-        ./scripts/deploy-lambda.sh "$LAMBDA_STACK"
+        ./scripts/deploy/deploy-lambda.sh "$LAMBDA_STACK"
         ;;
       ecs)
-        ./scripts/deploy-ecs.sh "$ECS_STACK"
+        ./scripts/deploy/deploy-ecs.sh "$ECS_STACK"
         ;;
       frontend)
-        ./scripts/deploy-frontend.sh "$FRONTEND_STACK"
+        ./scripts/deploy/deploy-frontend.sh "$FRONTEND_STACK"
         ;;
       all)
         echo "Deploying both architectures + frontend..."
         echo ""
         echo "Deploying in order (Frontend -> Lambda -> ECS)..."
         echo ""
-        ./scripts/deploy-frontend.sh "$FRONTEND_STACK"
+        ./scripts/deploy/deploy-frontend.sh "$FRONTEND_STACK"
         echo ""
         echo "=================================================="
         echo ""
-        ./scripts/deploy-lambda.sh "$LAMBDA_STACK"
+        ./scripts/deploy/deploy-lambda.sh "$LAMBDA_STACK"
         echo ""
         echo "=================================================="
         echo ""
-        ./scripts/deploy-ecs.sh "$ECS_STACK"
+        ./scripts/deploy/deploy-ecs.sh "$ECS_STACK"
         echo ""
         echo "All deployments complete!"
         ;;
@@ -112,28 +112,28 @@ case "$ACTION" in
   destroy)
     case "$TARGET" in
       lambda)
-        ./scripts/destroy-lambda.sh "$LAMBDA_STACK"
+        ./scripts/destroy/destroy-lambda.sh "$LAMBDA_STACK"
         ;;
       ecs)
-        ./scripts/destroy-ecs.sh "$ECS_STACK"
+        ./scripts/destroy/destroy-ecs.sh "$ECS_STACK"
         ;;
       frontend)
-        ./scripts/destroy-frontend.sh "$FRONTEND_STACK"
+        ./scripts/destroy/destroy-frontend.sh "$FRONTEND_STACK"
         ;;
       all)
         echo "Destroying both architectures + frontend..."
         echo ""
         echo "Destroying in reverse order (ECS -> Lambda -> Frontend)..."
         echo ""
-        ./scripts/destroy-ecs.sh "$ECS_STACK"
+        ./scripts/destroy/destroy-ecs.sh "$ECS_STACK"
         echo ""
         echo "=================================================="
         echo ""
-        ./scripts/destroy-lambda.sh "$LAMBDA_STACK"
+        ./scripts/destroy/destroy-lambda.sh "$LAMBDA_STACK"
         echo ""
         echo "=================================================="
         echo ""
-        ./scripts/destroy-frontend.sh "$FRONTEND_STACK"
+        ./scripts/destroy/destroy-frontend.sh "$FRONTEND_STACK"
         echo ""
         echo "All resources destroyed!"
         ;;
@@ -148,26 +148,26 @@ case "$ACTION" in
   test)
     case "$TARGET" in
       lambda)
-        ./scripts/test-lambda.sh "$LAMBDA_STACK"
+        ./scripts/test/test-lambda.sh "$LAMBDA_STACK"
         ;;
       ecs)
-        ./scripts/test-ecs.sh "$ECS_STACK"
+        ./scripts/test/test-ecs.sh "$ECS_STACK"
         ;;
       frontend)
-        ./scripts/test-frontend.sh "$FRONTEND_STACK"
+        ./scripts/test/test-frontend.sh "$FRONTEND_STACK"
         ;;
       all)
         echo "Testing both architectures + frontend..."
         echo ""
-        ./scripts/test-lambda.sh "$LAMBDA_STACK"
+        ./scripts/test/test-lambda.sh "$LAMBDA_STACK"
         echo ""
         echo "=================================================="
         echo ""
-        ./scripts/test-ecs.sh "$ECS_STACK"
+        ./scripts/test/test-ecs.sh "$ECS_STACK"
         echo ""
         echo "=================================================="
         echo ""
-        ./scripts/test-frontend.sh "$FRONTEND_STACK"
+        ./scripts/test/test-frontend.sh "$FRONTEND_STACK"
         echo ""
         echo "All tests complete!"
         ;;
@@ -182,20 +182,20 @@ case "$ACTION" in
   status)
     case "$TARGET" in
       lambda)
-        ./scripts/status-lambda.sh "$LAMBDA_STACK"
+        ./scripts/status/status-lambda.sh "$LAMBDA_STACK"
         ;;
       ecs)
-        ./scripts/status-ecs.sh "$ECS_STACK"
+        ./scripts/status/status-ecs.sh "$ECS_STACK"
         ;;
       frontend)
-        ./scripts/status-frontend.sh "$FRONTEND_STACK"
+        ./scripts/status/status-frontend.sh "$FRONTEND_STACK"
         ;;
       all)
         echo "Checking all stacks status..."
         echo ""
-        ./scripts/status-lambda.sh "$LAMBDA_STACK"
-        ./scripts/status-ecs.sh "$ECS_STACK"
-        ./scripts/status-frontend.sh "$FRONTEND_STACK"
+        ./scripts/status/status-lambda.sh "$LAMBDA_STACK"
+        ./scripts/status/status-ecs.sh "$ECS_STACK"
+        ./scripts/status/status-frontend.sh "$FRONTEND_STACK"
         ;;
       *)
         echo "Invalid target: $TARGET"

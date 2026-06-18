@@ -38,8 +38,8 @@ echo "Lambda deployment complete!"
 echo ""
 
 cd ../..
-chmod +x scripts/get-stack-status.sh 2>/dev/null || true
-bash scripts/get-stack-status.sh "$STACK_NAME"
+chmod +x scripts/status/get-stack-status.sh 2>/dev/null || true
+bash scripts/status/get-stack-status.sh "$STACK_NAME"
 
 API_URL=$(aws cloudformation describe-stacks \
   --stack-name "$STACK_NAME" \

@@ -25,14 +25,17 @@ fi
 echo "API URL: $API_URL"
 echo ""
 
-if [ ! -f "./test_api.sh" ]; then
-  echo "Error: test_api.sh not found in current directory"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+TEST_API="$SCRIPT_DIR/test-api.sh"
+
+if [ ! -f "$TEST_API" ]; then
+  echo "Error: test-api.sh not found"
   exit 1
 fi
 
-chmod +x ./test_api.sh
+chmod +x "$TEST_API"
 
 echo "Running API tests..."
 echo ""
 
-./test_api.sh "$STACK_NAME"
+"$TEST_API" "$STACK_NAME"
