@@ -25,11 +25,19 @@ app.use((req, res, next) => {
 app.use("/health", healthRoutes);
 app.use("/items", itemsRoutes);
 
-app.use(
-  "/docs",
-  swaggerUi.serve,
-  swaggerUi.setup(swaggerSpec)
-);
+const swaggerHtml = swaggerUi.generateHTML(swaggerSpec, {
+  customCss: '.swagger-ui .topbar { display: none }'
+});
+
+app.get("/docs", (req, res) => {
+  res.send(swaggerHtml);
+});
+
+app.get("/docs/", (req, res) => {
+  res.send(swaggerHtml);
+});
+
+app.use("/docs", swaggerUi.serveFiles(swaggerSpec, {}));
 
 app.get("/openapi.json", (req, res) => {
   res.json(swaggerSpec);

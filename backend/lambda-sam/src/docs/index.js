@@ -1,10 +1,16 @@
-const openApiSpec = {
+const getOpenApiSpec = (serverUrl) => ({
   openapi: "3.0.0",
   info: {
     title: "Inventory Lambda API",
     version: "1.0.0",
     description: "Inventory management API running on Lambda"
   },
+  servers: [
+    {
+      url: serverUrl,
+      description: "API Gateway"
+    }
+  ],
   paths: {
     "/health": {
       get: {
@@ -126,9 +132,9 @@ const openApiSpec = {
       }
     }
   }
-};
+});
 
-const swaggerUiHtml = `<!DOCTYPE html>
+const getSwaggerUiHtml = (openApiSpec) => `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -160,6 +166,12 @@ const swaggerUiHtml = `<!DOCTYPE html>
 exports.handler = async (event) => {
   const path = event.path || event.rawPath || '';
   
+  const domain = event.requestContext?.domainName || event.headers?.Host || event.headers?.host;
+  const stage = event.requestContext?.stage || 'Prod';
+  const serverUrl = `https://${domain}/${stage}`;
+  
+  const openApiSpec = getOpenApiSpec(serverUrl);
+  
   if (path.endsWith('/openapi.json')) {
     return {
       statusCode: 200,
@@ -177,6 +189,6 @@ exports.handler = async (event) => {
       'Content-Type': 'text/html',
       'Access-Control-Allow-Origin': '*'
     },
-    body: swaggerUiHtml
+    body: getSwaggerUiHtml(openApiSpec)
   };
 };

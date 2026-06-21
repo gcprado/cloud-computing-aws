@@ -181,6 +181,8 @@ Resources:
           Environment:
             - Name: TABLE_NAME
               Value: !Ref InventoryTable
+            - Name: API_URL
+              Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/prod"
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -473,6 +475,31 @@ Resources:
         ConnectionId: !Ref VpcLink
         Uri: !Sub "http://${NLB.DNSName}:80/docs"
 
+  ResourceDocsProxy:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ParentId: !Ref ResourceDocs
+      PathPart: "{proxy+}"
+
+  GetDocsProxy:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ResourceId: !Ref ResourceDocsProxy
+      HttpMethod: GET
+      AuthorizationType: NONE
+      RequestParameters:
+        method.request.path.proxy: true
+      Integration:
+        Type: HTTP_PROXY
+        IntegrationHttpMethod: GET
+        ConnectionType: VPC_LINK
+        ConnectionId: !Ref VpcLink
+        Uri: !Sub "http://${NLB.DNSName}:80/docs/{proxy}"
+        RequestParameters:
+          integration.request.path.proxy: method.request.path.proxy
+
   ResourceOpenApi:
     Type: AWS::ApiGateway::Resource
     Properties:
@@ -510,6 +537,7 @@ Resources:
       - GetHealth
       - OptionsHealth
       - GetDocs
+      - GetDocsProxy
       - GetOpenApi
     Properties:
       RestApiId: !Ref ApiGateway
