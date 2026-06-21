@@ -284,11 +284,47 @@ print_json "$BODY11"
 assert_status "Item2 should be 404" "$RES11" "404"
 
 # ============================================================
-# 12. FINAL LIST
+# 12. API DOCUMENTATION (SWAGGER UI)
 # ============================================================
 echo
 echo "============================================================"
-echo " 12. FINAL LIST"
+echo " 12. API DOCUMENTATION (SWAGGER UI)"
+echo "============================================================"
+
+RES_DOCS=$(curl -s -i "$API/docs")
+HTTP_DOCS=$(echo "$RES_DOCS" | grep -m1 "HTTP/2" | awk '{print $2}')
+BODY_DOCS=$(echo "$RES_DOCS" | sed '1,/^\r$/d')
+
+if [ "$HTTP_DOCS" = "200" ]; then
+  pass "GET /docs returns 200"
+else
+  fail "GET /docs status" "200" "$HTTP_DOCS"
+fi
+
+if echo "$BODY_DOCS" | grep -q "swagger-ui"; then
+  pass "GET /docs returns Swagger UI HTML"
+else
+  fail "GET /docs content" "swagger-ui HTML" "unexpected content"
+fi
+
+RES_OPENAPI=$(curl -s -i "$API/openapi.json")
+HTTP_OPENAPI=$(echo "$RES_OPENAPI" | grep -m1 "HTTP/2" | awk '{print $2}')
+BODY_OPENAPI=$(echo "$RES_OPENAPI" | sed '1,/^\r$/d')
+
+if [ "$HTTP_OPENAPI" = "200" ]; then
+  pass "GET /openapi.json returns 200"
+else
+  fail "GET /openapi.json status" "200" "$HTTP_OPENAPI"
+fi
+
+assert_json_equals "OpenAPI version field" "$BODY_OPENAPI" '.openapi' "3.0.0"
+
+# ============================================================
+# 13. FINAL LIST
+# ============================================================
+echo
+echo "============================================================"
+echo " 13. FINAL LIST"
 echo "============================================================"
 
 RES10=$(curl -s -i "$API/items")
